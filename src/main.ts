@@ -1,9 +1,12 @@
 import { AudioEngine } from './audio/engine';
 import { LOGICAL_H, LOGICAL_W } from './config';
+import { GamepadInput } from './input/gamepad';
 import { Keyboard } from './input/keyboard';
+import { TouchControls, touchEnabled } from './input/touch';
 import { GameLoop } from './loop';
 import { drawTextCentered } from './render/text';
 import { App } from './shell/app';
+import type { InputSnapshot } from './sim/state';
 import { installTestHooks, isTestMode } from './testhooks';
 
 function getCanvas(id: string): HTMLCanvasElement {
@@ -57,6 +60,8 @@ const livesOverride = Number(params.get('lives') ?? 0);
 
 const keyboard = new Keyboard();
 keyboard.attach(window);
+const touch = new TouchControls();
+const gamepad = new GamepadInput();
 const audio = new AudioEngine();
 
 // Autoplay policy: the context exists only after the first user gesture.
@@ -83,8 +88,30 @@ const app = new App(
   isTestMode() && params.has('autostart'),
 );
 
+const stage = document.getElementById('stage');
+if (stage) touch.mount(document.body, stage);
+touch.setVisible(touchEnabled(app.settings.touch));
+app.onSettingsChanged = (settings): void => {
+  touch.setVisible(touchEnabled(settings.touch));
+};
+
+function mergedSnapshot(): InputSnapshot {
+  const k = keyboard.snapshot();
+  const t = touch.snapshot();
+  const g = gamepad.snapshot();
+  return {
+    dir: t.dir ?? g.dir ?? k.dir,
+    fast: k.fast || t.fast || g.fast,
+    slow: k.slow || t.slow || g.slow,
+  };
+}
+
 function tickUpdate(): void {
-  app.update(keyboard.snapshot(), keyboard.drainPressed());
+  app.update(mergedSnapshot(), [
+    ...keyboard.drainPressed(),
+    ...touch.drainPressed(),
+    ...gamepad.drainPressed(),
+  ]);
 }
 
 function render(_alpha: number): void {

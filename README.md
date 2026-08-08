@@ -1,24 +1,48 @@
-# Qix
+# QIX
 
-A faithful, browser-playable recreation of **Qix** (Taito America, 1981) in modern TypeScript — Canvas 2D rendering, procedural Web Audio sound, near-zero runtime dependencies, 60 fps, installable as a PWA.
+A faithful, fully playable browser recreation of **Qix** (Taito America, 1981) in modern TypeScript — Canvas 2D rendering, procedural Web Audio sound, one ~1 KB runtime dependency, 60 fps, installable as a PWA.
 
-> **Status:** design complete, implementation not yet started. This repository currently contains the full product and engineering documentation, ready for a phased (agentic) build.
+**▶ Play it:** https://mmackelprang.github.io/qix/
 
-## Documentation
+## How to play
+
+Ride the border, then hold a draw button and steer into the open field to draw **Stix**. Reconnect to a wall and the side without the **Qix** is claimed — **fast** draws fill blue (1× points), **slow** draws fill red (2× points). Claim **75%** to win the level.
+
+Your opponents: the **Qix** (touching your incomplete line while drawing is death), **Sparx** (patrol the walls; after the red time line empties twice they turn blue and chase you down your own line), the **Fuse** (hesitate mid-draw and it burns from the start of your line toward you — keep moving), and the **Spiral Death Trap** (box yourself in and the fuse finishes the job). From level 3 there are **two Qix**: separate them into different regions to end the level instantly and multiply *all* future scoring (up to 9×).
+
+### Controls
+
+| Action | Keyboard | Touch | Gamepad |
+|---|---|---|---|
+| Move | Arrows / WASD | Virtual d-pad | D-pad / left stick |
+| Fast draw | `X` / `.` / `Shift` | FAST button | A |
+| Slow draw (2×) | `Z` / `,` / `Ctrl` | SLOW button | B |
+| Start / confirm | `Enter` / `Space` | Tap | Start |
+| Pause | `Esc` / `P` (then `Q` quits) | — | Select |
+| Mute | `M` | — | — |
+| Operator settings | `S` on the title screen | — | — |
+
+High scores ("QIX KICKERS") and settings persist locally. The operator settings menu — a nod to the original cabinet's CMOS test mode — adjusts claim target, lives, Sparx time line, volume, and touch controls; non-default gameplay settings tag scores as custom.
+
+## Development
+
+```bash
+npm ci
+npm run dev        # local dev server
+npm run check      # Biome lint/format + tsc type-check
+npm test           # Vitest unit suite (~100 tests, DOM-free sim)
+npm run e2e        # Playwright UAT against the production build
+npm run build      # production build (dist/)
+npm run budget     # gzipped bundle-size budget check
+```
+
+The simulation is pure data + pure functions at a fixed 60 Hz tick with a seeded RNG — same seed and inputs replay identical games, which powers the ASCII-fixture unit tests, the deterministic Playwright UAT (`?test` + `window.__qix` hooks), and the self-playing attract-mode demo. See the docs for the full design:
 
 | Document | Purpose |
 |---|---|
-| [**docs/PRD.md**](docs/PRD.md) | Product requirements — vision, complete game-mechanics specification (researched against the MAME driver and faithful remakes), attract mode, audio design, screens, input, success criteria |
-| [**docs/TECHNICAL_DESIGN.md**](docs/TECHNICAL_DESIGN.md) | Technical design — stack selection with rationale, architecture (pure deterministic simulation + thin render/audio shells), grid/flood-fill capture algorithm, enemy systems, testing strategy |
-| [**docs/ROADMAP.md**](docs/ROADMAP.md) | Phased delivery plan — 8 phases with tasks, exit criteria, and a builder contract for agentic implementation |
-
-## The game in one paragraph
-
-Steer a diamond marker along the playfield border and draw lines (**Stix**) into open territory — fast (blue, 1× points) or slow (red, 2× points). Close a region and the side without the **Qix** (a writhing multicolor line-storm) is claimed. Claim 75% to win the level — while **Sparx** patrol the walls, a **Fuse** burns down your line whenever you hesitate, and one careless spiral can seal your fate. From level 3, two Qix appear: split them into separate regions to end the level instantly and multiply all future scoring.
-
-## Planned stack
-
-TypeScript (~6.0) · Vite 8 · Canvas 2D (no engine) · zzfx + Web Audio · Vitest 4 · Playwright · Biome · GitHub Pages + PWA. Rationale in the [technical design](docs/TECHNICAL_DESIGN.md#2-technology-stack).
+| [docs/PRD.md](docs/PRD.md) | Product requirements & authoritative game-mechanics spec (researched against the MAME driver and faithful remakes) |
+| [docs/TECHNICAL_DESIGN.md](docs/TECHNICAL_DESIGN.md) | Architecture: stack rationale, deterministic sim, grid flood-fill capture, testing strategy |
+| [docs/ROADMAP.md](docs/ROADMAP.md) | The 8-phase build plan this implementation followed |
 
 ## License
 

@@ -26,6 +26,50 @@
         position: absolute;
         image-rendering: auto;
       }
+      #touch {
+        display: none;
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        z-index: 10;
+      }
+      #touch button {
+        pointer-events: auto;
+        position: absolute;
+        width: 56px;
+        height: 56px;
+        border: 1px solid #666;
+        border-radius: 10px;
+        background: rgba(40, 40, 40, 0.55);
+        color: #ddd;
+        font: bold 14px monospace;
+        touch-action: none;
+        user-select: none;
+        -webkit-user-select: none;
+      }
+      #touch button:active {
+        background: rgba(90, 90, 90, 0.75);
+      }
+      #touch .pad {
+        position: absolute;
+        left: 14px;
+        bottom: 18px;
+        width: 176px;
+        height: 176px;
+      }
+      #touch .pad .u { left: 60px; top: 0; }
+      #touch .pad .l { left: 0; top: 60px; }
+      #touch .pad .r { left: 120px; top: 60px; }
+      #touch .pad .d { left: 60px; top: 120px; }
+      #touch .draw {
+        position: absolute;
+        right: 14px;
+        bottom: 30px;
+        width: 140px;
+        height: 140px;
+      }
+      #touch .draw .fast { right: 0; bottom: 70px; width: 64px; height: 64px; }
+      #touch .draw .slow { right: 70px; bottom: 0; width: 64px; height: 64px; }
     </style>
   </head>
   <body>

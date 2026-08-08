@@ -28,6 +28,8 @@ jobs:
         run: npm run e2e
       - name: Build
         run: npm run build
+      - name: Bundle-size budget
+        run: npm run budget
       - uses: actions/upload-pages-artifact@v4
         if: github.ref == 'refs/heads/main'
         with:
@@ -44,5 +46,10 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
+      # Attempts to enable Pages (source: GitHub Actions) automatically; if
+      # the token lacks admin rights, enable once in Settings → Pages.
+      - uses: actions/configure-pages@v5
+        with:
+          enablement: true
       - id: deployment
         uses: actions/deploy-pages@v4

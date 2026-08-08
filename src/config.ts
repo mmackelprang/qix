@@ -16,8 +16,16 @@ export const HUD_H = 48;
 export const LOGICAL_W = FIELD_W;
 export const LOGICAL_H = HUD_H + FIELD_H;
 
-/** Marker speed in grid units per tick when fast-drawing / wall-riding. */
-export const PLAYER_SPEED = 2;
+/**
+ * Marker base speed in grid units per tick at 100% game speed — matches
+ * the original's ~1 px/frame at 60 fps. Slow drawing costs double per
+ * unit, yielding the arcade's alternate-frame half speed. The operator
+ * GAME SPEED setting (PRD §8.5) scales this and all enemy speeds.
+ */
+export const BASE_MARKER_SPEED = 1;
+
+/** Game-speed operator setting bounds (percent). */
+export const SPEED_PERCENT = { min: 50, max: 200, step: 10, default: 100 } as const;
 
 /** Claim target percentage (operator default). */
 export const DEFAULT_TARGET_PERCENT = 75;

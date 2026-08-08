@@ -1,4 +1,4 @@
-import { PLAYER_SPEED, TIMING } from '../config';
+import { BASE_MARKER_SPEED, TIMING } from '../config';
 import type { SimEvent } from './events';
 import { updateFuse } from './fuse';
 import { resolveDeath, startLevel } from './levels';
@@ -34,7 +34,7 @@ export function update(state: GameState, input: InputSnapshot): SimEvent[] {
     case 'playing': {
       state.markerPrev = { ...state.marker };
       const before = events.length;
-      updatePlayer(state, input, PLAYER_SPEED, events);
+      updatePlayer(state, input, events, BASE_MARKER_SPEED);
       // Score any claims the player completed this tick.
       let claimed = false;
       for (let i = before; i < events.length; i += 1) {

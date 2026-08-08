@@ -18,7 +18,7 @@ async function skipIntro(page: import('@playwright/test').Page): Promise<void> {
 }
 
 test('claiming a corner box scores by area and keeps playing', async ({ page }) => {
-  await page.goto('/?test&seed=1&autostart');
+  await page.goto('/?test&seed=1&autostart&speed=200');
   await skipIntro(page);
 
   // Draw a small box near the bottom edge, far from the Qix's spawn:
@@ -50,7 +50,7 @@ test('claiming a corner box scores by area and keeps playing', async ({ page }) 
 
 test('reaching the target ends the level with a bonus and advances', async ({ page }) => {
   // Operator target lowered to 30% for a fast UAT loop.
-  await page.goto('/?test&seed=1&target=30&autostart');
+  await page.goto('/?test&seed=3&target=30&autostart&speed=200');
   await skipIntro(page);
 
   // Claim the left ~38% of the field: ride left along the bottom, then
@@ -81,7 +81,7 @@ test('reaching the target ends the level with a bonus and advances', async ({ pa
 });
 
 test('halting mid-draw in the open field is eventually fatal', async ({ page }) => {
-  await page.goto('/?test&seed=1&autostart');
+  await page.goto('/?test&seed=1&autostart&speed=200');
   await skipIntro(page);
 
   // Draw up into the middle of the field and stop — the fuse ignites and
@@ -106,7 +106,21 @@ test('halting mid-draw in the open field is eventually fatal', async ({ page }) 
   const s = await summary(page);
   expect(s?.lives).toBe(2);
   expect(s?.drawing).toBe(false);
-  // Respawned where the stix began: bottom-center wall.
+  // Respawned where the stix began: bottom-center wall. (A patrolling
+  // sparx may legitimately be mid-way through a second kill by now.)
   expect(s?.marker).toEqual({ x: 128, y: 256 });
-  expect(s?.mode).toBe('playing');
+  expect(s?.mode === 'playing' || s?.mode === 'death').toBe(true);
+});
+
+test('default game speed is authentic: 1 unit per tick on the wall', async ({ page }) => {
+  await page.goto('/?test&seed=1&autostart');
+  await page.waitForFunction(() => window.__qix !== undefined);
+  await page.evaluate(() => window.__qix?.advanceTicks(121));
+  expect((await summary(page))?.speedPercent).toBe(100);
+  await page.keyboard.down('ArrowLeft');
+  await page.evaluate(() => window.__qix?.advanceTicks(10));
+  await page.keyboard.up('ArrowLeft');
+  const s = await summary(page);
+  // 10 ticks at 1 unit/tick — the 1981 marker pace.
+  expect(s?.marker).toEqual({ x: 118, y: 256 });
 });

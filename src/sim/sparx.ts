@@ -17,6 +17,8 @@ export interface SparxState {
   isSuper: boolean;
   /** When chasing on the stix: index into drawing.path, else null. */
   stixIndex: number | null;
+  /** Fixed-point movement accumulator (fractional speeds stay exact). */
+  acc?: number;
 }
 
 const DIR_ORDER: readonly Dir[] = ['up', 'right', 'down', 'left'];
@@ -186,10 +188,13 @@ export function updateSparx(state: GameState, events: SimEvent[]): void {
     state.sparxTimer = sparxTimerTicks(state);
   }
 
-  const speed = sparxSpeed(state.level);
+  const speed = (sparxSpeed(state.level) * state.speedPercent) / 100;
   const drawing = state.drawing;
   for (const s of state.sparx) {
-    for (let step = 0; step < speed; step += 1) {
+    s.acc = (s.acc ?? 0) + speed;
+    const steps = Math.floor(s.acc);
+    s.acc -= steps;
+    for (let step = 0; step < steps; step += 1) {
       if (s.stixIndex !== null) {
         stepOnStix(state, s);
         continue;

@@ -17,17 +17,22 @@ describe('operator settings (PRD §8.5)', () => {
       targetPercent: 75,
       lives: 3,
       sparxTimeS: 37,
+      speedPercent: 100,
       touch: 'auto',
     });
   });
 
   it('round-trips through storage', () => {
     const store = new FakeStorage();
-    saveSettings({ targetPercent: 60, lives: 5, sparxTimeS: 20, touch: 'on' }, store);
+    saveSettings(
+      { targetPercent: 60, lives: 5, sparxTimeS: 20, speedPercent: 150, touch: 'on' },
+      store,
+    );
     expect(loadSettings(store)).toEqual({
       targetPercent: 60,
       lives: 5,
       sparxTimeS: 20,
+      speedPercent: 150,
       touch: 'on',
     });
   });
@@ -36,12 +41,19 @@ describe('operator settings (PRD §8.5)', () => {
     const store = new FakeStorage();
     store.setItem(
       'qix.settings.v1',
-      JSON.stringify({ targetPercent: 200, lives: 0, sparxTimeS: -5, touch: 'banana' }),
+      JSON.stringify({
+        targetPercent: 200,
+        lives: 0,
+        sparxTimeS: -5,
+        speedPercent: 999,
+        touch: 'banana',
+      }),
     );
     expect(loadSettings(store)).toEqual({
       targetPercent: 99,
       lives: 1,
       sparxTimeS: 10,
+      speedPercent: 200,
       touch: 'auto',
     });
   });
@@ -55,6 +67,7 @@ describe('operator settings (PRD §8.5)', () => {
   it('flags gameplay-affecting deviations as custom', () => {
     expect(isCustom(DEFAULT_SETTINGS)).toBe(false);
     expect(isCustom({ ...DEFAULT_SETTINGS, targetPercent: 60 })).toBe(true);
+    expect(isCustom({ ...DEFAULT_SETTINGS, speedPercent: 150 })).toBe(true);
     expect(isCustom({ ...DEFAULT_SETTINGS, touch: 'on' })).toBe(false); // touch isn't gameplay
   });
 });

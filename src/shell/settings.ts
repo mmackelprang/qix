@@ -8,6 +8,8 @@ export interface Settings {
   targetPercent: number;
   lives: number;
   sparxTimeS: number;
+  /** Game speed percent — 100 matches the 1981 arcade timing. */
+  speedPercent: number;
   touch: 'auto' | 'on' | 'off';
 }
 
@@ -15,6 +17,7 @@ export const DEFAULT_SETTINGS: Settings = {
   targetPercent: 75,
   lives: 3,
   sparxTimeS: 37,
+  speedPercent: 100,
   touch: 'auto',
 };
 
@@ -22,6 +25,7 @@ export const SETTING_RANGES = {
   targetPercent: { min: 50, max: 99, step: 5 },
   lives: { min: 1, max: 9, step: 1 },
   sparxTimeS: { min: 10, max: 99, step: 1 },
+  speedPercent: { min: 50, max: 200, step: 10 },
 } as const;
 
 const KEY = 'qix.settings.v1';
@@ -64,6 +68,11 @@ export function loadSettings(storage?: StorageLike): Settings {
           SETTING_RANGES.sparxTimeS.min,
           SETTING_RANGES.sparxTimeS.max,
         ),
+        speedPercent: clamp(
+          typeof p.speedPercent === 'number' ? p.speedPercent : 100,
+          SETTING_RANGES.speedPercent.min,
+          SETTING_RANGES.speedPercent.max,
+        ),
         touch: p.touch === 'on' || p.touch === 'off' ? p.touch : 'auto',
       };
     }
@@ -86,6 +95,7 @@ export function isCustom(settings: Settings): boolean {
   return (
     settings.targetPercent !== DEFAULT_SETTINGS.targetPercent ||
     settings.lives !== DEFAULT_SETTINGS.lives ||
-    settings.sparxTimeS !== DEFAULT_SETTINGS.sparxTimeS
+    settings.sparxTimeS !== DEFAULT_SETTINGS.sparxTimeS ||
+    settings.speedPercent !== DEFAULT_SETTINGS.speedPercent
   );
 }

@@ -51,7 +51,16 @@ interface NameEntry {
   slot: number;
 }
 
-const SETTING_ROWS = ['target', 'lives', 'sparxTime', 'volume', 'touch', 'reset', 'back'] as const;
+const SETTING_ROWS = [
+  'target',
+  'lives',
+  'sparxTime',
+  'speed',
+  'volume',
+  'touch',
+  'reset',
+  'back',
+] as const;
 type SettingRow = (typeof SETTING_ROWS)[number];
 
 export class App {
@@ -114,6 +123,7 @@ export class App {
       targetPercent: this.settings.targetPercent,
       lives: this.settings.lives,
       sparxTimeS: this.settings.sparxTimeS,
+      speedPercent: this.settings.speedPercent,
       ...urlOpts,
     });
     if (level !== undefined && level > 1) game.level = level;
@@ -166,6 +176,11 @@ export class App {
       case 'sparxTime': {
         const r = SETTING_RANGES.sparxTimeS;
         st.sparxTimeS = Math.min(r.max, Math.max(r.min, st.sparxTimeS + delta * r.step));
+        break;
+      }
+      case 'speed': {
+        const r = SETTING_RANGES.speedPercent;
+        st.speedPercent = Math.min(r.max, Math.max(r.min, st.speedPercent + delta * r.step));
         break;
       }
       case 'volume':
@@ -343,6 +358,7 @@ export class App {
           ['target', 'CLAIM TARGET', `${st.targetPercent}%`],
           ['lives', 'LIVES', `${st.lives}`],
           ['sparxTime', 'SPARX TIME', `${st.sparxTimeS}S`],
+          ['speed', 'GAME SPEED', `${st.speedPercent}%`],
           ['volume', 'VOLUME', `${Math.round(this.audio.volume * 100)}%`],
           ['touch', 'TOUCH', st.touch.toUpperCase()],
           ['reset', this.resetArmed ? 'RESET SCORES - SURE?' : 'RESET SCORES', ''],

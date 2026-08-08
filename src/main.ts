@@ -57,6 +57,7 @@ const seed = Number(params.get('seed') ?? 1) || 1;
 const targetOverride = Number(params.get('target') ?? 0);
 const levelOverride = Number(params.get('level') ?? 0);
 const livesOverride = Number(params.get('lives') ?? 0);
+const speedOverride = Number(params.get('speed') ?? 0);
 
 const keyboard = new Keyboard();
 keyboard.attach(window);
@@ -84,6 +85,7 @@ const app = new App(
     ...(targetOverride > 0 ? { targetPercent: targetOverride } : {}),
     ...(levelOverride > 1 ? { level: levelOverride } : {}),
     ...(livesOverride > 0 ? { lives: livesOverride } : {}),
+    ...(speedOverride > 0 ? { speedPercent: speedOverride } : {}),
   },
   isTestMode() && params.has('autostart'),
 );

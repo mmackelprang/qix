@@ -7,7 +7,7 @@ import { update } from '../src/sim/update';
 import { runScript } from './helpers/script';
 
 const bare = (seed = 3) => {
-  const s = createGameState({ width: 32, height: 32, seed });
+  const s = createGameState({ width: 32, height: 32, seed, speedPercent: 200 });
   s.mode = 'playing';
   s.qixes = [];
   s.sparx = [];

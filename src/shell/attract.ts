@@ -192,7 +192,13 @@ class ScriptPlayer {
 function makeMiniState(beat: Beat): GameState | null {
   const demo = beat.demo;
   if (!demo) return null;
-  const s = createGameState({ width: demo.width, height: demo.height, seed: demo.seed });
+  // Tutorial scripts are authored against 2-units/tick movement.
+  const s = createGameState({
+    width: demo.width,
+    height: demo.height,
+    seed: demo.seed,
+    speedPercent: 200,
+  });
   s.mode = 'playing';
   s.targetPercent = 101; // demos never end their level
   s.qixCell = { x: Math.floor(demo.width / 2), y: 4 };

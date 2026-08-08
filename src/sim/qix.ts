@@ -60,7 +60,7 @@ function rollTarget(state: GameState, ep: Endpoint): void {
     if (cellUnclaimed(state, tx, ty)) {
       ep.tx = tx;
       ep.ty = ty;
-      const scale = difficultyFor(state.level).qixSpeedScale;
+      const scale = difficultyFor(state.level).qixSpeedScale * (state.speedPercent / 100);
       ep.speed = (QIX.speedMin + rng.next() * (QIX.speedMax - QIX.speedMin)) * scale;
       return;
     }

@@ -1,0 +1,25 @@
+{
+  "name": "qix",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Faithful browser recreation of Qix (Taito America, 1981) in modern TypeScript",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "check": "biome ci . && tsc --noEmit",
+    "fix": "biome check --write .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "e2e": "playwright test"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.5.0",
+    "@playwright/test": "^1.62.0",
+    "@types/node": "^22.0.0",
+    "typescript": "~6.0.0",
+    "vite": "^8.2.0",
+    "vitest": "^4.1.0"
+  }
+}

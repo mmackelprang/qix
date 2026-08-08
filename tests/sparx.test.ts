@@ -8,7 +8,7 @@ import { update } from '../src/sim/update';
 import { runScript } from './helpers/script';
 
 const freshGame = (seed = 3) => {
-  const s = createGameState({ width: 32, height: 32, seed });
+  const s = createGameState({ width: 32, height: 32, seed, speedPercent: 200 });
   for (let t = 0; t < TIMING.levelIntro; t += 1) update(s, IDLE_INPUT);
   s.qixes = []; // isolate sparx behavior
   s.qixCell = { x: 24, y: 8 };
@@ -16,7 +16,7 @@ const freshGame = (seed = 3) => {
 };
 
 const bare = (seed = 3) => {
-  const s = createGameState({ width: 32, height: 32, seed });
+  const s = createGameState({ width: 32, height: 32, seed, speedPercent: 200 });
   s.mode = 'playing';
   s.qixes = [];
   s.qixCell = { x: 24, y: 8 };
@@ -29,17 +29,18 @@ describe('sparx patrol', () => {
     expect(s.sparx).toHaveLength(2);
     for (let t = 0; t < 5; t += 1) update(s, IDLE_INPUT);
     const xs = s.sparx.map((sp) => sp.pos.x).sort((a, b) => a - b);
-    expect(xs).toEqual([11, 21]); // 16 ± 5 along the top wall
+    expect(xs).toEqual([6, 26]); // 16 ± 10 along the top wall (2 units/tick at 200%)
     expect(s.sparx.every((sp) => sp.pos.y === 0)).toBe(true);
   });
 
   it('follows the border around corners without reversing', () => {
     const s = freshGame();
-    // Right-going sparx: 16 units to the corner (32,0), then down.
+    // Right-going sparx at 2 units/tick: 16 units to the corner (32,0)
+    // by tick 8, then 24 down the right wall by tick 20.
     for (let t = 0; t < 20; t += 1) update(s, IDLE_INPUT);
     const right = s.sparx.find((sp) => sp.pos.x === 32 || sp.pos.x > 16);
     expect(right).toBeDefined();
-    expect(right?.pos).toEqual({ x: 32, y: 4 });
+    expect(right?.pos).toEqual({ x: 32, y: 24 });
   });
 
   it('kills the player on contact, including same-tick swaps', () => {

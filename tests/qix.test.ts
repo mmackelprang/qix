@@ -5,7 +5,7 @@ import { createQix, qixTouchesPlayer, updateQix } from '../src/sim/qix';
 import { createGameState } from '../src/sim/state';
 
 const playingState = (seed = 5) => {
-  const s = createGameState({ width: 64, height: 64, seed });
+  const s = createGameState({ width: 64, height: 64, seed, speedPercent: 200 });
   s.mode = 'playing';
   return s;
 };

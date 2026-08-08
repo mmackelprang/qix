@@ -119,6 +119,8 @@ export function parseAscii(text: string, seed = 1): GameState {
     modeTicks: 0,
     marker,
     markerPrev: { ...marker },
+    moveAcc: 0,
+    speedPercent: 200,
     drawing: null,
     qixes: [],
     sparx: [],

@@ -58,9 +58,9 @@ export function updateFuse(state: GameState, events: SimEvent[]): boolean {
   }
   if (!fuse.burning) return false;
 
-  fuse.stepAccum += 1;
-  if (fuse.stepAccum >= FUSE.stepDiv) {
-    fuse.stepAccum = 0;
+  fuse.stepAccum += state.speedPercent / 100;
+  while (fuse.stepAccum >= FUSE.stepDiv) {
+    fuse.stepAccum -= FUSE.stepDiv;
     fuse.edgeIndex += 1;
   }
   // Caught up with the marker (which sits at the end of the path)?

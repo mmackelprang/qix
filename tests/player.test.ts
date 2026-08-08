@@ -4,7 +4,7 @@ import { runScript } from './helpers/script';
 
 // Small 6×4 field. Marker spawns bottom-center at (3,4). Speed is 2/tick.
 const smallState = () => {
-  const s = createGameState({ width: 6, height: 4, seed: 1 });
+  const s = createGameState({ width: 6, height: 4, seed: 1, speedPercent: 200 });
   s.mode = 'playing';
   return s;
 };

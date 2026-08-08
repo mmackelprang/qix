@@ -7,7 +7,7 @@ import { runScript } from './helpers/script';
 // 6×4 field, marker spawns bottom-center (3,4), speed 2/tick.
 // Qix stand-in cell defaults to field center (3,2) — tests reposition it.
 const smallState = () => {
-  const s = createGameState({ width: 6, height: 4, seed: 1 });
+  const s = createGameState({ width: 6, height: 4, seed: 1, speedPercent: 200 });
   s.mode = 'playing';
   s.qixCell = { x: 4, y: 1 };
   return s;

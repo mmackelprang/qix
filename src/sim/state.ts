@@ -1,4 +1,9 @@
-import { DEFAULT_LIVES, DEFAULT_SPARX_TIME_S, DEFAULT_TARGET_PERCENT } from '../config';
+import {
+  DEFAULT_LIVES,
+  DEFAULT_SPARX_TIME_S,
+  DEFAULT_TARGET_PERCENT,
+  SPEED_PERCENT,
+} from '../config';
 import { Rng } from '../rng';
 import type { FuseState } from './fuse';
 import { type Dir, Grid, type Point } from './grid';
@@ -39,6 +44,10 @@ export interface GameState {
   marker: Point;
   /** Marker position at the start of the current tick (swap collisions). */
   markerPrev: Point;
+  /** Fixed-point movement accumulator (fractional speeds stay exact). */
+  moveAcc: number;
+  /** Operator GAME SPEED percent — scales marker, qix, sparx, and fuse. */
+  speedPercent: number;
   drawing: Drawing | null;
   qixes: QixState[];
   /**
@@ -74,6 +83,7 @@ export interface NewGameOptions {
   targetPercent?: number;
   lives?: number;
   sparxTimeS?: number;
+  speedPercent?: number;
 }
 
 export function markerSpawn(width: number, height: number): Point {
@@ -93,6 +103,8 @@ export function createGameState(opts: NewGameOptions = {}): GameState {
     // Marker spawns bottom-center of the border (PRD §4.9).
     marker: markerSpawn(width, height),
     markerPrev: markerSpawn(width, height),
+    moveAcc: 0,
+    speedPercent: opts.speedPercent ?? SPEED_PERCENT.default,
     drawing: null,
     qixes: [],
     qixCell: { x: Math.floor(width / 2), y: Math.floor(height / 2) },

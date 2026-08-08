@@ -88,21 +88,37 @@ function subStep(state: GameState, input: InputSnapshot, events: SimEvent[]): bo
   return true;
 }
 
-/** Advance the marker for one tick (PLAYER_SPEED substeps; slow draws half). */
+/**
+ * Advance the marker for one tick. Movement uses a fixed-point accumulator:
+ * each tick banks `BASE_MARKER_SPEED × speedPercent` worth of movement; a
+ * unit step costs 1 while riding walls or fast-drawing and 2 while
+ * slow-drawing (evaluated per substep, so the halving applies from the
+ * very step a slow draw starts) — at 100% speed that reproduces the
+ * original's 1 px/frame fast and alternate-frame slow exactly.
+ */
 export function updatePlayer(
   state: GameState,
   input: InputSnapshot,
-  speed: number,
   events: SimEvent[],
+  baseSpeed = 1,
 ): void {
-  const slowSteps = Math.max(1, Math.floor(speed / 2));
+  state.moveAcc += (baseSpeed * state.speedPercent) / 100;
   let moved = false;
-  for (let i = 0; i < speed; i += 1) {
-    // Slow drawing halves speed — evaluated per substep so the halving
-    // applies from the very tick a slow draw starts.
-    if (state.drawing !== null && input.slow && i >= slowSteps) break;
-    if (subStep(state, input, events)) moved = true;
+  for (;;) {
+    const cost = state.drawing !== null && input.slow ? 2 : 1;
+    if (state.moveAcc < cost) break;
+    if (!subStep(state, input, events)) {
+      // Blocked (or no direction held): dump banked movement so release
+      // never bursts the marker forward.
+      state.moveAcc = 0;
+      break;
+    }
+    state.moveAcc -= cost;
+    moved = true;
   }
+  // Legitimate banking (sub-unit speeds, slow draw) carries at most one
+  // max-cost step across ticks.
+  state.moveAcc = Math.min(state.moveAcc, 2);
   if (state.drawing !== null) {
     state.drawing.stalledTicks = moved ? 0 : state.drawing.stalledTicks + 1;
   }

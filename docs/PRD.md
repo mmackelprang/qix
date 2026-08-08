@@ -80,8 +80,8 @@ This section is the authoritative rule set. Values marked **(operator)** are con
 - 4-directional movement (up/down/left/right), no diagonals.
 - On walls: the marker slides freely along any wall edge at full speed.
 - Drawing starts when the player holds **Fast** or **Slow** and steers off a wall into unclaimed territory:
-  - **Fast draw:** full marker speed. Completed claims fill **cyan/blue** and score **1×**.
-  - **Slow draw:** **half** marker speed. Completed claims fill **dark red** and score **2×**.
+  - **Fast draw:** full marker speed (1 unit/tick at 100% game speed — the original's ~1 px/frame). Completed claims fill **cyan/blue** and score **1×**.
+  - **Slow draw:** **half** marker speed (alternate ticks, as the original). Completed claims fill **dark red** and score **2×**.
   - The draw speed of a Stix is fixed by the button held when the claim **completes** (matching the original: the scoring class is decided per-claim; switching buttons mid-draw moves at the new speed and the claim scores at the class of the button held — see Technical Design §6.3 for the tie-break: any Slow segment in the path makes the claim Slow).
 - The Stix is axis-aligned, with 90° turns allowed at any point. The marker **cannot cross or retrace** its own incomplete Stix, and cannot draw along an existing wall.
 - Releasing the draw button mid-draw halts the marker on the incomplete Stix (starting the Fuse countdown, §4.6).
@@ -260,6 +260,7 @@ Accessible from the title screen — a nod to the original's CMOS test-mode sett
 | Claim target % | 75 | 50–99 |
 | Lives | 3 | 1–9 |
 | Sparx time line (s) | 37 | 10–99 |
+| Game speed | 100% | 50–200% (100% = 1981 arcade timing: marker ≈ 1 unit/tick at 60 Hz; scales marker, Qix, Sparx, and fuse together) |
 | Master volume / mute | 100% / off | — |
 | Touch controls | auto | auto/on/off |
 | Reset high scores | — | confirm |

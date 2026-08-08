@@ -27,6 +27,7 @@ export interface QixStateSummary {
   superSparx: boolean;
   sparxTimer: number;
   fuseBurning: boolean;
+  speedPercent: number;
   lastDeathCause: string | null;
 }
 
@@ -86,6 +87,7 @@ export function installTestHooks(
         superSparx: game?.sparx.some((s) => s.isSuper) ?? false,
         sparxTimer: game?.sparxTimer ?? 0,
         fuseBurning: game?.fuse?.burning ?? false,
+        speedPercent: game?.speedPercent ?? 100,
         lastDeathCause: app.lastDeathCause,
       };
     },

@@ -116,3 +116,31 @@ test('a qualifying game over runs name entry and persists the score', async ({ p
   const reloaded = await page.evaluate(() => window.__qix?.getScores());
   expect(reloaded?.[0]?.name).toBe('ACE');
 });
+
+test('the operator GAME SPEED setting persists and applies to new games', async ({ page }) => {
+  await page.goto('/?test&seed=1');
+  await page.waitForFunction(() => window.__qix !== undefined);
+  // Open settings from the title screen and bump GAME SPEED (row 4).
+  await page.keyboard.press('KeyS');
+  await advance(page, 1);
+  for (let i = 0; i < 3; i += 1) {
+    await page.keyboard.press('ArrowDown');
+    await advance(page, 1);
+  }
+  await page.keyboard.press('ArrowRight'); // 100% → 110%
+  await advance(page, 1);
+  await page.keyboard.press('Escape');
+  await advance(page, 1);
+  // Start a game: it picks up the stored speed.
+  await page.keyboard.press('Space');
+  await advance(page, 1);
+  expect((await summary(page))?.speedPercent).toBe(110);
+  // And it survives a reload.
+  await page.reload();
+  await page.waitForFunction(() => window.__qix !== undefined);
+  await page.keyboard.press('Space');
+  await advance(page, 1);
+  expect((await summary(page))?.speedPercent).toBe(110);
+  // Restore the default for other tests.
+  await page.evaluate(() => localStorage.removeItem('qix.settings.v1'));
+});

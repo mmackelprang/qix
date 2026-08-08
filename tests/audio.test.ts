@@ -31,7 +31,7 @@ class FakeSink implements AudioSink {
 }
 
 const playingState = () => {
-  const s = createGameState({ width: 32, height: 32, seed: 3 });
+  const s = createGameState({ width: 32, height: 32, seed: 3, speedPercent: 200 });
   s.mode = 'playing';
   s.qixes = [];
   s.sparx = [];

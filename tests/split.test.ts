@@ -18,7 +18,6 @@ const drawScript = (s: ReturnType<typeof createGameState>, steps: ScriptStep[]):
       updatePlayer(
         s,
         { dir: step.dir ?? null, fast: step.fast ?? false, slow: step.slow ?? false },
-        2,
         events,
       );
     }
@@ -28,7 +27,7 @@ const drawScript = (s: ReturnType<typeof createGameState>, steps: ScriptStep[]):
 
 /** A playing state with two stationary qix parked on opposite sides. */
 const twoQixState = () => {
-  const s = createGameState({ width: 32, height: 32, seed: 9 });
+  const s = createGameState({ width: 32, height: 32, seed: 9, speedPercent: 200 });
   s.mode = 'playing';
   s.level = 3;
   s.sparx = [];

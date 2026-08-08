@@ -3,7 +3,11 @@ import { createGameState } from '../src/sim/state';
 import { runScript } from './helpers/script';
 
 // Small 6×4 field. Marker spawns bottom-center at (3,4). Speed is 2/tick.
-const smallState = () => createGameState({ width: 6, height: 4, seed: 1 });
+const smallState = () => {
+  const s = createGameState({ width: 6, height: 4, seed: 1 });
+  s.mode = 'playing';
+  return s;
+};
 
 describe('marker on walls', () => {
   it('slides along walls at full speed', () => {

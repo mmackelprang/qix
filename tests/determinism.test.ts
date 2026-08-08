@@ -22,6 +22,7 @@ describe('determinism', () => {
   it('identical seeds and inputs produce identical final states', () => {
     const runOnce = (): { ascii: string; claimed: number; percent: number } => {
       const s = createGameState({ width: 16, height: 16, seed: 42 });
+      s.mode = 'playing';
       s.qixCell = { x: 12, y: 12 };
       runScript(s, SCRIPT);
       return { ascii: renderAscii(s), claimed: s.claimedCells, percent: claimedPercent(s) };
@@ -37,7 +38,11 @@ describe('determinism', () => {
 describe('fuzz invariants', () => {
   it('random legal play upholds core invariants for 5000 ticks', () => {
     const s = createGameState({ width: 12, height: 12, seed: 1234 });
+    s.mode = 'playing';
     s.qixCell = { x: 6, y: 6 };
+    // Unreachable target: keep the fuzz in 'playing' (level resets would
+    // legitimately drop claimedCells and break the monotonicity check).
+    s.targetPercent = 101;
     const driver = new Rng(999);
     const dirs: Dir[] = ['up', 'down', 'left', 'right'];
     let input: InputSnapshot = { dir: 'left', fast: false, slow: false };

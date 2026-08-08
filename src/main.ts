@@ -1,7 +1,11 @@
-import { COLORS, HUD_H, LOGICAL_H, LOGICAL_W } from './config';
+import { COLORS, FIELD_H, FIELD_W, HUD_H, LOGICAL_H, LOGICAL_W } from './config';
 import { Keyboard } from './input/keyboard';
 import { GameLoop } from './loop';
+import { Effects } from './render/effects';
+import { renderQix } from './render/entities';
+import { renderHud } from './render/hud';
 import { renderPlayfield } from './render/playfield';
+import { drawTextCentered } from './render/text';
 import { claimedPercent, createGameState } from './sim/state';
 import { update } from './sim/update';
 import { installTestHooks, isTestMode } from './testhooks';
@@ -51,13 +55,29 @@ layout();
 
 const params = new URLSearchParams(window.location.search);
 const seed = Number(params.get('seed') ?? 1) || 1;
+const targetOverride = Number(params.get('target') ?? 0);
 
-const state = createGameState({ seed });
+const state = createGameState({
+  seed,
+  ...(targetOverride > 0 ? { targetPercent: targetOverride } : {}),
+});
 const keyboard = new Keyboard();
 keyboard.attach(window);
+const effects = new Effects();
+
+// Placeholder until Phase 6 high-score persistence.
+const highScore = 30_000;
+let lastClear: { finalPercent: number; bonus: number } | null = null;
 
 function tickUpdate(): void {
-  update(state, keyboard.snapshot());
+  const events = update(state, keyboard.snapshot());
+  effects.consume(events, state.marker);
+  effects.step();
+  for (const e of events) {
+    if (e.type === 'levelClear') {
+      lastClear = { finalPercent: e.finalPercent, bonus: e.bonus };
+    }
+  }
 }
 
 function render(_alpha: number): void {
@@ -68,16 +88,45 @@ function render(_alpha: number): void {
   ctx.save();
   ctx.translate(0, HUD_H);
   renderPlayfield(state, ctx);
+  for (const qix of state.qixes) {
+    renderQix(ctx, qix);
+  }
+  effects.render(ctx, FIELD_W, FIELD_H);
+
+  // Mode overlays (moves to the shell in Phase 6).
+  const cx = FIELD_W / 2;
+  switch (state.mode) {
+    case 'levelIntro':
+      drawTextCentered(ctx, 'PLAYER 1', cx, 100, COLORS.hudText, 2);
+      drawTextCentered(ctx, `LEVEL ${state.level}`, cx, 124, COLORS.hudText, 2);
+      break;
+    case 'levelClear': {
+      const pct = lastClear
+        ? Math.floor(lastClear.finalPercent)
+        : Math.floor(claimedPercent(state));
+      const bonus = lastClear?.bonus ?? 0;
+      drawTextCentered(ctx, `PERCENTAGE ${pct}%`, cx, 90, COLORS.hudText, 2);
+      drawTextCentered(ctx, `THRESHOLD ${state.targetPercent}%`, cx, 114, COLORS.hudText, 2);
+      drawTextCentered(
+        ctx,
+        `BONUS (${pct}-${state.targetPercent}) X 1000 = ${bonus}`,
+        cx,
+        138,
+        COLORS.hudText,
+      );
+      break;
+    }
+    case 'gameOver':
+      drawTextCentered(ctx, 'GAME OVER', cx, 112, COLORS.hudText, 2);
+      break;
+    default:
+      break;
+  }
   ctx.restore();
 
   const hud = hudCtx;
   hud.setTransform(scale, 0, 0, scale, 0, 0);
-  hud.clearRect(0, 0, LOGICAL_W, LOGICAL_H);
-  hud.fillStyle = COLORS.hudText;
-  hud.font = '8px monospace';
-  hud.textBaseline = 'top';
-  hud.fillText(`CLAIMED ${claimedPercent(state).toFixed(0)}% ${state.targetPercent}%`, 8, 8);
-  hud.fillText(`TICK ${state.tick}`, 8, 20);
+  renderHud(hud, state, Math.max(highScore, state.score));
 }
 
 const loop = new GameLoop({ update: tickUpdate, render });

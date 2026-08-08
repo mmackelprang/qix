@@ -76,10 +76,4 @@ export function renderPlayfield(state: GameState, ctx: CanvasRenderingContext2D)
   ctx.fill();
   ctx.fillStyle = COLORS.markerCore;
   ctx.fillRect(m.x - 1, m.y - 1, 2, 2);
-
-  // Qix stand-in (replaced by the real streamer entity in Phase 2).
-  const q = state.qixCell;
-  ctx.strokeStyle = '#e040e0';
-  ctx.lineWidth = 1;
-  ctx.strokeRect(q.x - 2.5, q.y - 2.5, 6, 6);
 }

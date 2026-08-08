@@ -98,10 +98,20 @@ export function completeClaim(state: GameState, events: SimEvent[]): void {
   const cls = claimClassOf(drawing.classes);
   const mark = cls === 'slow' ? CLAIMED_SLOW : CLAIMED_FAST;
   let deltaCells = 0;
+  let minX = grid.w;
+  let minY = grid.h;
+  let maxX = 0;
+  let maxY = 0;
   for (let i = 0; i < grid.cells.length; i += 1) {
     if (grid.cells[i] === UNCLAIMED && reachable[i] === 0) {
       grid.cells[i] = mark;
       deltaCells += 1;
+      const cx = i % grid.w;
+      const cy = (i - cx) / grid.w;
+      if (cx < minX) minX = cx;
+      if (cy < minY) minY = cy;
+      if (cx > maxX) maxX = cx;
+      if (cy > maxY) maxY = cy;
     }
   }
 
@@ -111,6 +121,12 @@ export function completeClaim(state: GameState, events: SimEvent[]): void {
   state.claimedCells += deltaCells;
   state.drawing = null;
   const deltaPercent = (deltaCells / grid.totalCells) * 100;
-  events.push({ type: 'claim', deltaCells, deltaPercent, cls });
+  events.push({
+    type: 'claim',
+    deltaCells,
+    deltaPercent,
+    cls,
+    bounds: { minX, minY, maxX: maxX + 1, maxY: maxY + 1 },
+  });
   events.push({ type: 'drawStop' });
 }

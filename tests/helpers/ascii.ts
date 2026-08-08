@@ -115,10 +115,17 @@ export function parseAscii(text: string, seed = 1): GameState {
     grid,
     rng: new Rng(seed),
     tick: 0,
+    mode: 'playing',
+    modeTicks: 0,
     marker,
     drawing: null,
+    qixes: [],
     qixCell,
     claimedCells: grid.claimedCount(),
     targetPercent: 75,
+    score: 0,
+    lives: 3,
+    level: 1,
+    multiplier: 1,
   };
 }

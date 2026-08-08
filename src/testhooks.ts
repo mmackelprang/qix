@@ -1,5 +1,5 @@
 import type { GameLoop } from './loop';
-import { claimedPercent, type GameState } from './sim/state';
+import { claimedPercent, type GameMode, type GameState } from './sim/state';
 
 /**
  * Deterministic driving hooks for e2e/UAT, enabled only when the page is
@@ -11,6 +11,11 @@ export interface QixStateSummary {
   claimedPercent: number;
   marker: { x: number; y: number };
   drawing: boolean;
+  mode: GameMode;
+  score: number;
+  lives: number;
+  level: number;
+  multiplier: number;
 }
 
 export interface QixTestHooks {
@@ -42,6 +47,11 @@ export function installTestHooks(loop: GameLoop, state: GameState): void {
       claimedPercent: claimedPercent(state),
       marker: { x: state.marker.x, y: state.marker.y },
       drawing: state.drawing !== null,
+      mode: state.mode,
+      score: state.score,
+      lives: state.lives,
+      level: state.level,
+      multiplier: state.multiplier,
     }),
   };
 }

@@ -28,6 +28,32 @@ export const DEFAULT_LIVES = 3;
 /** Sparx time line in seconds (operator default). */
 export const DEFAULT_SPARX_TIME_S = 37;
 
+/** Scoring (PRD §4.4): points per percent claimed, and threshold bonus. */
+export const SCORE_PER_PERCENT_FAST = 100;
+export const SCORE_PER_PERCENT_SLOW = 200;
+export const BONUS_PER_PERCENT_OVER = 1000;
+export const MULTIPLIER_MAX = 9;
+
+/** Mode sequence timings, in ticks. */
+export const TIMING = {
+  levelIntro: 120,
+  death: 90,
+  levelClear: 180,
+} as const;
+
+/** Qix motion tuning (TD §5.5; starting values from the pyqix transcription). */
+export const QIX = {
+  speedMin: 0.4,
+  speedMax: 1.8,
+  retargetMin: 20,
+  retargetMax: 90,
+  targetTries: 12,
+  maxSeparation: 64,
+  initialHalfLength: 12,
+  trailLength: 12,
+  colorCycleChance: 0.07,
+} as const;
+
 /** Palette (PRD §7). */
 export const COLORS = {
   background: '#000000',

@@ -8,6 +8,7 @@ import { runScript } from './helpers/script';
 // Qix stand-in cell defaults to field center (3,2) — tests reposition it.
 const smallState = () => {
   const s = createGameState({ width: 6, height: 4, seed: 1 });
+  s.mode = 'playing';
   s.qixCell = { x: 4, y: 1 };
   return s;
 };

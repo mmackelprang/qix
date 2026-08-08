@@ -1,5 +1,7 @@
+import { DEFAULT_LIVES, DEFAULT_TARGET_PERCENT } from '../config';
 import { Rng } from '../rng';
 import { type Dir, Grid, type Point } from './grid';
+import type { QixState } from './qix';
 
 export type DrawClass = 'fast' | 'slow';
 
@@ -22,20 +24,31 @@ export interface Drawing {
   stalledTicks: number;
 }
 
+/** Game phase within a run (TD §5.8). */
+export type GameMode = 'levelIntro' | 'playing' | 'death' | 'levelClear' | 'gameOver';
+
 export interface GameState {
   grid: Grid;
   rng: Rng;
   tick: number;
+  mode: GameMode;
+  /** Ticks spent in the current mode (drives sequence timings). */
+  modeTicks: number;
   marker: Point;
   drawing: Drawing | null;
+  qixes: QixState[];
   /**
-   * Cell the Qix currently occupies — determines which side of a completed
-   * claim stays unclaimed. Phase 1 uses a stationary stand-in; Phase 2
-   * replaces this with the real Qix entity's position.
+   * Cell used by capture to decide which side stays unclaimed — kept in
+   * sync with the (first) Qix's position each tick.
    */
   qixCell: Point;
   claimedCells: number;
   targetPercent: number;
+  score: number;
+  lives: number;
+  level: number;
+  /** Split-the-Qix global score multiplier (PRD §4.4), 1–9. */
+  multiplier: number;
 }
 
 export function claimedPercent(state: GameState): number {
@@ -47,6 +60,11 @@ export interface NewGameOptions {
   height?: number;
   seed?: number;
   targetPercent?: number;
+  lives?: number;
+}
+
+export function markerSpawn(width: number, height: number): Point {
+  return { x: Math.floor(width / 2), y: height };
 }
 
 export function createGameState(opts: NewGameOptions = {}): GameState {
@@ -57,11 +75,18 @@ export function createGameState(opts: NewGameOptions = {}): GameState {
     grid,
     rng: new Rng(opts.seed ?? 1),
     tick: 0,
+    mode: 'levelIntro',
+    modeTicks: 0,
     // Marker spawns bottom-center of the border (PRD §4.9).
-    marker: { x: Math.floor(width / 2), y: height },
+    marker: markerSpawn(width, height),
     drawing: null,
+    qixes: [],
     qixCell: { x: Math.floor(width / 2), y: Math.floor(height / 2) },
     claimedCells: 0,
-    targetPercent: opts.targetPercent ?? 75,
+    targetPercent: opts.targetPercent ?? DEFAULT_TARGET_PERCENT,
+    score: 0,
+    lives: opts.lives ?? DEFAULT_LIVES,
+    level: 1,
+    multiplier: 1,
   };
 }

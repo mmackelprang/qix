@@ -18,7 +18,7 @@ async function skipIntro(page: import('@playwright/test').Page): Promise<void> {
 }
 
 test('claiming a corner box scores by area and keeps playing', async ({ page }) => {
-  await page.goto('/?test&seed=1');
+  await page.goto('/?test&seed=1&autostart');
   await skipIntro(page);
 
   // Draw a small box near the bottom edge, far from the Qix's spawn:
@@ -50,7 +50,7 @@ test('claiming a corner box scores by area and keeps playing', async ({ page }) 
 
 test('reaching the target ends the level with a bonus and advances', async ({ page }) => {
   // Operator target lowered to 30% for a fast UAT loop.
-  await page.goto('/?test&seed=1&target=30');
+  await page.goto('/?test&seed=1&target=30&autostart');
   await skipIntro(page);
 
   // Claim the left ~38% of the field: ride left along the bottom, then
@@ -81,7 +81,7 @@ test('reaching the target ends the level with a bonus and advances', async ({ pa
 });
 
 test('halting mid-draw in the open field is eventually fatal', async ({ page }) => {
-  await page.goto('/?test&seed=1');
+  await page.goto('/?test&seed=1&autostart');
   await skipIntro(page);
 
   // Draw up into the middle of the field and stop — the fuse ignites and

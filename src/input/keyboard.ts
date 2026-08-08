@@ -24,12 +24,14 @@ const PREVENT_DEFAULT = new Set(['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRigh
 export class Keyboard {
   private readonly held = new Set<string>();
   private pressOrder: string[] = [];
+  private pressedQueue: string[] = [];
 
   attach(target: Window): void {
     target.addEventListener('keydown', (e: KeyboardEvent) => {
       if (PREVENT_DEFAULT.has(e.code)) e.preventDefault();
       if (this.held.has(e.code)) return;
       this.held.add(e.code);
+      this.pressedQueue.push(e.code);
       if (e.code in DIR_KEYS) this.pressOrder.push(e.code);
     });
     target.addEventListener('keyup', (e: KeyboardEvent) => {
@@ -54,5 +56,12 @@ export class Keyboard {
       if (SLOW_KEYS.has(code)) slow = true;
     }
     return { dir, fast, slow };
+  }
+
+  /** Edge-triggered key codes since the last drain (shell navigation). */
+  drainPressed(): string[] {
+    const pressed = this.pressedQueue;
+    this.pressedQueue = [];
+    return pressed;
   }
 }

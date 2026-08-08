@@ -9,7 +9,7 @@ const advance = (page: import('@playwright/test').Page, n: number) =>
   page.evaluate((ticks) => window.__qix?.advanceTicks(ticks), n);
 
 test('standing still on the border gets the player caught by a Sparx', async ({ page }) => {
-  await page.goto('/?test&seed=1');
+  await page.goto('/?test&seed=1&autostart');
   await page.waitForFunction(() => window.__qix !== undefined);
   await advance(page, 121);
   expect((await summary(page))?.mode).toBe('playing');
@@ -30,7 +30,7 @@ test('standing still on the border gets the player caught by a Sparx', async ({ 
 });
 
 test('stalling on a short stix near the wall is punished by the fuse', async ({ page }) => {
-  await page.goto('/?test&seed=6');
+  await page.goto('/?test&seed=6&autostart');
   await page.waitForFunction(() => window.__qix !== undefined);
   await advance(page, 121);
 

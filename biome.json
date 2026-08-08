@@ -25,6 +25,18 @@
       "quoteStyle": "single"
     }
   },
+  "overrides": [
+    {
+      "includes": ["src/audio/sfx.ts"],
+      "linter": {
+        "rules": {
+          "suspicious": {
+            "noSparseArray": "off"
+          }
+        }
+      }
+    }
+  ],
   "assist": {
     "enabled": true,
     "actions": {

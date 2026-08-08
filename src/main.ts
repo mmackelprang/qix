@@ -1,3 +1,5 @@
+import { AudioEngine } from './audio/engine';
+import { routeAudioEvents } from './audio/router';
 import { COLORS, FIELD_H, FIELD_W, HUD_H, LOGICAL_H, LOGICAL_W } from './config';
 import { Keyboard } from './input/keyboard';
 import { GameLoop } from './loop';
@@ -66,6 +68,20 @@ if (levelOverride > 1) state.level = levelOverride;
 const keyboard = new Keyboard();
 keyboard.attach(window);
 const effects = new Effects();
+const audio = new AudioEngine();
+
+// Autoplay policy: the context exists only after the first user gesture.
+const tryUnlock = (): void => {
+  if (!audio.unlocked) void audio.unlock();
+};
+window.addEventListener('keydown', tryUnlock);
+window.addEventListener('pointerdown', tryUnlock);
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') audio.resume();
+});
+window.addEventListener('keydown', (e: KeyboardEvent) => {
+  if (e.code === 'KeyM') audio.setMuted(!audio.muted);
+});
 
 // Placeholder until Phase 6 high-score persistence.
 const highScore = 30_000;
@@ -77,6 +93,7 @@ function tickUpdate(): void {
   const events = update(state, keyboard.snapshot());
   effects.consume(events, state.marker);
   effects.step();
+  routeAudioEvents(events, state, audio);
   for (const e of events) {
     if (e.type === 'levelClear') {
       lastClear = { finalPercent: e.finalPercent, bonus: e.bonus };
@@ -145,12 +162,25 @@ function render(_alpha: number): void {
   const hud = hudCtx;
   hud.setTransform(scale, 0, 0, scale, 0, 0);
   renderHud(hud, state, Math.max(highScore, state.score));
+  if (!audio.unlocked) {
+    drawTextCentered(hud, 'KEY OR TAP FOR SOUND', LOGICAL_W / 2, 38, '#707070');
+  } else if (audio.muted) {
+    drawTextCentered(hud, 'MUTED (M)', LOGICAL_W / 2, 38, '#707070');
+  }
 }
 
 const loop = new GameLoop({ update: tickUpdate, render });
 
 if (isTestMode()) {
-  installTestHooks(loop, state, () => lastDeathCause);
+  installTestHooks(
+    loop,
+    state,
+    () => lastDeathCause,
+    () => ({
+      unlocked: audio.unlocked,
+      muted: audio.muted,
+    }),
+  );
   render(0);
 } else {
   loop.start();

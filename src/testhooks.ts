@@ -24,11 +24,17 @@ export interface QixStateSummary {
   lastDeathCause: string | null;
 }
 
+export interface QixAudioInfo {
+  unlocked: boolean;
+  muted: boolean;
+}
+
 export interface QixTestHooks {
   advanceTicks: (n: number) => void;
   getTicks: () => number;
   isRunning: () => boolean;
   getSummary: () => QixStateSummary;
+  getAudioInfo: () => QixAudioInfo;
 }
 
 declare global {
@@ -45,6 +51,7 @@ export function installTestHooks(
   loop: GameLoop,
   state: GameState,
   getLastDeathCause: () => string | null = () => null,
+  getAudioInfo: () => QixAudioInfo = () => ({ unlocked: false, muted: false }),
 ): void {
   window.__qix = {
     advanceTicks: (n: number): void => {
@@ -69,5 +76,6 @@ export function installTestHooks(
       fuseBurning: state.fuse?.burning ?? false,
       lastDeathCause: getLastDeathCause(),
     }),
+    getAudioInfo,
   };
 }

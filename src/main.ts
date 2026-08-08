@@ -56,11 +56,13 @@ layout();
 const params = new URLSearchParams(window.location.search);
 const seed = Number(params.get('seed') ?? 1) || 1;
 const targetOverride = Number(params.get('target') ?? 0);
+const levelOverride = Number(params.get('level') ?? 0);
 
 const state = createGameState({
   seed,
   ...(targetOverride > 0 ? { targetPercent: targetOverride } : {}),
 });
+if (levelOverride > 1) state.level = levelOverride;
 const keyboard = new Keyboard();
 keyboard.attach(window);
 const effects = new Effects();
@@ -68,6 +70,7 @@ const effects = new Effects();
 // Placeholder until Phase 6 high-score persistence.
 const highScore = 30_000;
 let lastClear: { finalPercent: number; bonus: number } | null = null;
+let lastSplit: number | null = null;
 let lastDeathCause: string | null = null;
 
 function tickUpdate(): void {
@@ -77,6 +80,10 @@ function tickUpdate(): void {
   for (const e of events) {
     if (e.type === 'levelClear') {
       lastClear = { finalPercent: e.finalPercent, bonus: e.bonus };
+      lastSplit = null;
+    } else if (e.type === 'split') {
+      lastSplit = e.multiplier;
+      lastClear = null;
     } else if (e.type === 'death') {
       lastDeathCause = e.cause;
     }
@@ -107,6 +114,11 @@ function render(_alpha: number): void {
       drawTextCentered(ctx, `LEVEL ${state.level}`, cx, 124, COLORS.hudText, 2);
       break;
     case 'levelClear': {
+      if (lastSplit !== null) {
+        drawTextCentered(ctx, 'QIX SPLIT', cx, 100, COLORS.hudText, 2);
+        drawTextCentered(ctx, `MULTIPLIER ${lastSplit}X`, cx, 124, COLORS.hudText, 2);
+        break;
+      }
       const pct = lastClear
         ? Math.floor(lastClear.finalPercent)
         : Math.floor(claimedPercent(state));

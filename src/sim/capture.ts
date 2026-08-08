@@ -1,3 +1,4 @@
+import { MULTIPLIER_MAX } from '../config';
 import type { SimEvent } from './events';
 import { CLAIMED_FAST, CLAIMED_SLOW, type Dir, type Point, UNCLAIMED } from './grid';
 import type { DrawClass, GameState } from './state';
@@ -91,8 +92,24 @@ export function completeClaim(state: GameState, events: SimEvent[]): void {
     grid.setWallEdge(a, dirBetween(a, b), true);
   }
 
-  // 2. Flood from the Qix's side.
-  const reachable = floodFromCell(state, state.qixCell);
+  // 2. Flood from the (first) Qix's side.
+  const qixCells = state.qixes.length > 0 ? state.qixes.map((q) => q.cell) : [state.qixCell];
+  const reachable = floodFromCell(state, qixCells[0] as Point);
+
+  // Split-the-Qix (PRD §4.7): if the path separated the qix into different
+  // regions, the level ends instantly — no fill, multiplier up (max 9x).
+  if (qixCells.length > 1) {
+    const separated = qixCells.slice(1).some((c) => reachable[c.y * grid.w + c.x] === 0);
+    if (separated) {
+      state.drawing = null;
+      state.multiplier = Math.min(MULTIPLIER_MAX, state.multiplier + 1);
+      state.mode = 'levelClear';
+      state.modeTicks = 0;
+      events.push({ type: 'split', multiplier: state.multiplier });
+      events.push({ type: 'drawStop' });
+      return;
+    }
+  }
 
   // 3. Claim everything unclaimed the Qix cannot reach.
   const cls = claimClassOf(drawing.classes);

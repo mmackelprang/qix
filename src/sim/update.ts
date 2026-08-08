@@ -49,6 +49,8 @@ export function update(state: GameState, input: InputSnapshot): SimEvent[] {
         // The wall graph changed; stix chasers and orphaned sparx re-home.
         evictSparxFromStix(state);
       }
+      // A split (PRD §4.7) ends the level from inside completeClaim.
+      if (state.mode !== 'playing') break;
       if (checkThreshold(state, events)) break;
 
       if (updateFuse(state, events)) {

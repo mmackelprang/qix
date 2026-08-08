@@ -1,4 +1,4 @@
-import { SPARX } from '../config';
+import { difficultyFor, SPARX } from '../config';
 import type { SimEvent } from './events';
 import { DIRS, type Dir, type Point } from './grid';
 import type { GameState } from './state';
@@ -27,7 +27,7 @@ const stepFrom = (p: Point, d: Dir): Point => ({ x: p.x + DIRS[d].x, y: p.y + DI
 
 /** Sparx speed for a level: +1 unit/tick every few levels (PRD §4.8). */
 export function sparxSpeed(level: number): number {
-  return SPARX.speedBase + Math.floor((level - 1) / SPARX.speedLevelStep);
+  return SPARX.speedBase + difficultyFor(level).sparxSpeedBonus;
 }
 
 /** Total sparx-timer ticks for the current operator setting. */
@@ -170,7 +170,7 @@ export function updateSparx(state: GameState, events: SimEvent[]): void {
   state.sparxTimer -= 1;
   if (state.sparxTimer <= 0) {
     state.sparxExpiries += 1;
-    if (state.sparxExpiries >= SPARX.superAfterExpiries) {
+    if (state.sparxExpiries >= difficultyFor(state.level).superAfterExpiries) {
       let mutated = false;
       for (const s of state.sparx) {
         if (!s.isSuper) {

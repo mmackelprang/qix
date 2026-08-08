@@ -1,5 +1,9 @@
-import { COLORS, FIELD_H, FIELD_W, HUD_H, LOGICAL_H, LOGICAL_W } from './config';
+import { COLORS, HUD_H, LOGICAL_H, LOGICAL_W } from './config';
+import { Keyboard } from './input/keyboard';
 import { GameLoop } from './loop';
+import { renderPlayfield } from './render/playfield';
+import { claimedPercent, createGameState } from './sim/state';
+import { update } from './sim/update';
 import { installTestHooks, isTestMode } from './testhooks';
 
 function getCanvas(id: string): HTMLCanvasElement {
@@ -43,14 +47,17 @@ function layout(): void {
 window.addEventListener('resize', layout);
 layout();
 
-// ── Phase 0 placeholder simulation & render ──────────────────────────────
-// A black playfield with a white border and a live tick counter, proving out
-// the loop, scaling, and test hooks. Replaced by the real sim in Phase 1.
+// ── Game wiring ──────────────────────────────────────────────────────────
 
-let tick = 0;
+const params = new URLSearchParams(window.location.search);
+const seed = Number(params.get('seed') ?? 1) || 1;
 
-function update(): void {
-  tick += 1;
+const state = createGameState({ seed });
+const keyboard = new Keyboard();
+keyboard.attach(window);
+
+function tickUpdate(): void {
+  update(state, keyboard.snapshot());
 }
 
 function render(_alpha: number): void {
@@ -58,27 +65,25 @@ function render(_alpha: number): void {
   ctx.setTransform(scale, 0, 0, scale, 0, 0);
   ctx.fillStyle = COLORS.background;
   ctx.fillRect(0, 0, LOGICAL_W, LOGICAL_H);
+  ctx.save();
+  ctx.translate(0, HUD_H);
+  renderPlayfield(state, ctx);
+  ctx.restore();
 
-  // Playfield border (walls will replace this in Phase 1).
-  ctx.strokeStyle = COLORS.wall;
-  ctx.lineWidth = 1;
-  ctx.strokeRect(0.5, HUD_H + 0.5, FIELD_W - 1, FIELD_H - 1);
-
-  // HUD placeholder.
   const hud = hudCtx;
   hud.setTransform(scale, 0, 0, scale, 0, 0);
   hud.clearRect(0, 0, LOGICAL_W, LOGICAL_H);
   hud.fillStyle = COLORS.hudText;
   hud.font = '8px monospace';
   hud.textBaseline = 'top';
-  hud.fillText('QIX — PHASE 0', 8, 8);
-  hud.fillText(`TICK ${tick}`, 8, 20);
+  hud.fillText(`CLAIMED ${claimedPercent(state).toFixed(0)}% ${state.targetPercent}%`, 8, 8);
+  hud.fillText(`TICK ${state.tick}`, 8, 20);
 }
 
-const loop = new GameLoop({ update, render });
+const loop = new GameLoop({ update: tickUpdate, render });
 
 if (isTestMode()) {
-  installTestHooks(loop);
+  installTestHooks(loop, state);
   render(0);
 } else {
   loop.start();

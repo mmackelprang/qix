@@ -5,5 +5,11 @@ interface Window {
     advanceTicks: (n: number) => void;
     getTicks: () => number;
     isRunning: () => boolean;
+    getSummary: () => {
+      ticks: number;
+      claimedPercent: number;
+      marker: { x: number; y: number };
+      drawing: boolean;
+    };
   };
 }

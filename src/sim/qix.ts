@@ -1,4 +1,4 @@
-import { QIX } from '../config';
+import { difficultyFor, QIX } from '../config';
 import type { SimEvent } from './events';
 import { pointOnSegment, segmentsIntersect } from './geom';
 import { type Point, UNCLAIMED } from './grid';
@@ -37,6 +37,8 @@ export interface QixState {
   retargetTicks: number;
   colorIdx: number;
   trail: TrailLine[];
+  /** The (unclaimed) cell this qix currently occupies — capture side-picking. */
+  cell: Point;
 }
 
 const cellOf = (state: GameState, x: number, y: number): Point => ({
@@ -58,7 +60,8 @@ function rollTarget(state: GameState, ep: Endpoint): void {
     if (cellUnclaimed(state, tx, ty)) {
       ep.tx = tx;
       ep.ty = ty;
-      ep.speed = QIX.speedMin + rng.next() * (QIX.speedMax - QIX.speedMin);
+      const scale = difficultyFor(state.level).qixSpeedScale;
+      ep.speed = (QIX.speedMin + rng.next() * (QIX.speedMax - QIX.speedMin)) * scale;
       return;
     }
   }
@@ -82,6 +85,7 @@ export function createQix(state: GameState, at: Point): QixState {
     retargetTicks: 0,
     colorIdx: 0,
     trail: [],
+    cell: { ...at },
   };
   rollTarget(state, qix.a);
   rollTarget(state, qix.b);
@@ -136,17 +140,19 @@ export function updateQix(state: GameState, qix: QixState): void {
   });
   if (qix.trail.length > QIX.trailLength) qix.trail.shift();
 
-  // Keep the capture algorithm's side-picking cell in sync with the line
-  // midpoint (guaranteed unclaimed by confinement; clamp is belt-and-braces).
+  // Keep this qix's side-picking cell in sync with the line midpoint
+  // (guaranteed unclaimed by confinement; clamp is belt-and-braces).
   const midX = (qix.a.x + qix.b.x) / 2;
   const midY = (qix.a.y + qix.b.y) / 2;
   const mid = cellOf(state, midX, midY);
   if (state.grid.cell(mid.x, mid.y) === UNCLAIMED) {
-    state.qixCell = mid;
+    qix.cell = mid;
   } else {
     const aCell = cellOf(state, qix.a.x, qix.a.y);
-    if (state.grid.cell(aCell.x, aCell.y) === UNCLAIMED) state.qixCell = aCell;
+    if (state.grid.cell(aCell.x, aCell.y) === UNCLAIMED) qix.cell = aCell;
   }
+  // Legacy single-qix mirror, used when tests drive capture directly.
+  state.qixCell = state.qixes[0]?.cell ?? state.qixCell;
 }
 
 /**

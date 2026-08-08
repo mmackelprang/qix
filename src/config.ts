@@ -73,6 +73,30 @@ export const FUSE = {
   stepDiv: 2,
 } as const;
 
+/**
+ * Data-driven difficulty (PRD §4.8): everything that scales with level in
+ * one place so playtesting can tune without code changes.
+ */
+export interface LevelDifficulty {
+  /** Number of Qix (two from level 3 — enables split-the-Qix). */
+  qixCount: number;
+  /** Multiplier on Qix endpoint speeds. */
+  qixSpeedScale: number;
+  /** Added to the base sparx speed (units/tick). */
+  sparxSpeedBonus: number;
+  /** Timer expiries before Super Sparx (drops at high levels). */
+  superAfterExpiries: number;
+}
+
+export function difficultyFor(level: number): LevelDifficulty {
+  return {
+    qixCount: level >= 3 ? 2 : 1,
+    qixSpeedScale: Math.min(1.8, 1 + 0.08 * (level - 1)),
+    sparxSpeedBonus: Math.floor((level - 1) / SPARX.speedLevelStep),
+    superAfterExpiries: level >= 7 ? 1 : SPARX.superAfterExpiries,
+  };
+}
+
 /** Palette (PRD §7). */
 export const COLORS = {
   background: '#000000',

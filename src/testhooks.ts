@@ -16,6 +16,7 @@ export interface QixStateSummary {
   lives: number;
   level: number;
   multiplier: number;
+  qixCount: number;
   sparxCount: number;
   superSparx: boolean;
   sparxTimer: number;
@@ -61,6 +62,7 @@ export function installTestHooks(
       lives: state.lives,
       level: state.level,
       multiplier: state.multiplier,
+      qixCount: state.qixes.length,
       sparxCount: state.sparx.length,
       superSparx: state.sparx.some((s) => s.isSuper),
       sparxTimer: state.sparxTimer,

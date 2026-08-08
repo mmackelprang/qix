@@ -1,3 +1,4 @@
+import { difficultyFor } from '../config';
 import type { SimEvent } from './events';
 import { createQix } from './qix';
 import { snapSparxToWalls, sparxTimerTicks, spawnSparxWave } from './sparx';
@@ -16,9 +17,17 @@ export function startLevel(state: GameState, events: SimEvent[]): void {
   state.fuse = null;
   state.marker = markerSpawn(grid.w, grid.h);
   state.markerPrev = { ...state.marker };
-  const center = { x: Math.floor(grid.w / 2), y: Math.floor(grid.h / 4) };
-  state.qixCell = center;
-  state.qixes = [createQix(state, center)];
+  const { qixCount } = difficultyFor(state.level);
+  const spawnY = Math.floor(grid.h / 4);
+  const spawns =
+    qixCount === 1
+      ? [{ x: Math.floor(grid.w / 2), y: spawnY }]
+      : [
+          { x: Math.floor(grid.w / 3), y: spawnY },
+          { x: Math.floor((2 * grid.w) / 3), y: spawnY },
+        ];
+  state.qixes = spawns.map((at) => createQix(state, at));
+  state.qixCell = { ...(spawns[0] as { x: number; y: number }) };
   state.sparx = [];
   state.sparxTimer = sparxTimerTicks(state);
   state.sparxExpiries = 0;

@@ -26,4 +26,5 @@ export type SimEvent =
   | { type: 'respawn' }
   | { type: 'levelStart'; level: number }
   | { type: 'levelClear'; finalPercent: number; bonus: number }
+  | { type: 'split'; multiplier: number }
   | { type: 'gameOver'; finalScore: number };

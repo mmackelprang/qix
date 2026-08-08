@@ -54,6 +54,25 @@ export const QIX = {
   colorCycleChance: 0.07,
 } as const;
 
+/** Sparx tuning (PRD §4.6, TD §5.6). */
+export const SPARX = {
+  /** Sparx per wave (level start and each timer expiry). */
+  waveSize: 2,
+  /** Timer expiries before all sparx turn Super (blue, stix-chasing). */
+  superAfterExpiries: 2,
+  /** Base speed in units/tick; +1 every `speedLevelStep` levels. */
+  speedBase: 1,
+  speedLevelStep: 4,
+} as const;
+
+/** Fuse tuning (PRD §4.6, TD §5.7). */
+export const FUSE = {
+  /** Ticks stalled mid-draw before the fuse becomes visible and burns. */
+  igniteTicks: 60,
+  /** The fuse advances one path edge every `stepDiv` ticks. */
+  stepDiv: 2,
+} as const;
+
 /** Palette (PRD §7). */
 export const COLORS = {
   background: '#000000',

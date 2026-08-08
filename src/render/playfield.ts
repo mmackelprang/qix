@@ -49,19 +49,31 @@ export function renderPlayfield(state: GameState, ctx: CanvasRenderingContext2D)
   ctx.lineWidth = 1;
   ctx.stroke();
 
-  // In-progress stix.
+  // In-progress stix: fuse-burned edges render dimmed grey, the live
+  // remainder in red, with a bright spark at the burn front.
   const drawing = state.drawing;
   if (drawing && drawing.path.length > 1) {
-    ctx.beginPath();
-    const first = drawing.path[0] as Point;
-    ctx.moveTo(first.x, first.y);
-    for (let i = 1; i < drawing.path.length; i += 1) {
-      const p = drawing.path[i] as Point;
-      ctx.lineTo(p.x, p.y);
+    const burnEdge = state.fuse?.burning ? state.fuse.edgeIndex : 0;
+    const drawRange = (from: number, to: number, color: string): void => {
+      if (to <= from) return;
+      ctx.beginPath();
+      const first = drawing.path[from] as Point;
+      ctx.moveTo(first.x, first.y);
+      for (let i = from + 1; i <= to; i += 1) {
+        const p = drawing.path[i] as Point;
+        ctx.lineTo(p.x, p.y);
+      }
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    };
+    drawRange(0, burnEdge, COLORS.stixBurned);
+    drawRange(burnEdge, drawing.path.length - 1, COLORS.stix);
+    if (state.fuse?.burning) {
+      const spark = drawing.path[Math.min(burnEdge, drawing.path.length - 1)] as Point;
+      ctx.fillStyle = '#ffe040';
+      ctx.fillRect(spark.x - 1.5, spark.y - 1.5, 3, 3);
     }
-    ctx.strokeStyle = COLORS.stix;
-    ctx.lineWidth = 1;
-    ctx.stroke();
   }
 
   // Marker: red diamond with a white core.

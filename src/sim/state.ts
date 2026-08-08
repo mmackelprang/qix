@@ -1,7 +1,9 @@
-import { DEFAULT_LIVES, DEFAULT_TARGET_PERCENT } from '../config';
+import { DEFAULT_LIVES, DEFAULT_SPARX_TIME_S, DEFAULT_TARGET_PERCENT } from '../config';
 import { Rng } from '../rng';
+import type { FuseState } from './fuse';
 import { type Dir, Grid, type Point } from './grid';
 import type { QixState } from './qix';
+import type { SparxState } from './sparx';
 
 export type DrawClass = 'fast' | 'slow';
 
@@ -35,6 +37,8 @@ export interface GameState {
   /** Ticks spent in the current mode (drives sequence timings). */
   modeTicks: number;
   marker: Point;
+  /** Marker position at the start of the current tick (swap collisions). */
+  markerPrev: Point;
   drawing: Drawing | null;
   qixes: QixState[];
   /**
@@ -42,6 +46,14 @@ export interface GameState {
    * sync with the (first) Qix's position each tick.
    */
   qixCell: Point;
+  sparx: SparxState[];
+  /** Ticks remaining on the sparx time line. */
+  sparxTimer: number;
+  /** Times the time line has fully expired this life. */
+  sparxExpiries: number;
+  /** Operator "TIME LINE" seconds (PRD §8.5). */
+  sparxTimeS: number;
+  fuse: FuseState | null;
   claimedCells: number;
   targetPercent: number;
   score: number;
@@ -61,6 +73,7 @@ export interface NewGameOptions {
   seed?: number;
   targetPercent?: number;
   lives?: number;
+  sparxTimeS?: number;
 }
 
 export function markerSpawn(width: number, height: number): Point {
@@ -79,9 +92,15 @@ export function createGameState(opts: NewGameOptions = {}): GameState {
     modeTicks: 0,
     // Marker spawns bottom-center of the border (PRD §4.9).
     marker: markerSpawn(width, height),
+    markerPrev: markerSpawn(width, height),
     drawing: null,
     qixes: [],
     qixCell: { x: Math.floor(width / 2), y: Math.floor(height / 2) },
+    sparx: [],
+    sparxTimer: (opts.sparxTimeS ?? DEFAULT_SPARX_TIME_S) * 60,
+    sparxExpiries: 0,
+    sparxTimeS: opts.sparxTimeS ?? DEFAULT_SPARX_TIME_S,
+    fuse: null,
     claimedCells: 0,
     targetPercent: opts.targetPercent ?? DEFAULT_TARGET_PERCENT,
     score: 0,

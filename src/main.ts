@@ -2,7 +2,7 @@ import { COLORS, FIELD_H, FIELD_W, HUD_H, LOGICAL_H, LOGICAL_W } from './config'
 import { Keyboard } from './input/keyboard';
 import { GameLoop } from './loop';
 import { Effects } from './render/effects';
-import { renderQix } from './render/entities';
+import { renderQix, renderSparx } from './render/entities';
 import { renderHud } from './render/hud';
 import { renderPlayfield } from './render/playfield';
 import { drawTextCentered } from './render/text';
@@ -68,6 +68,7 @@ const effects = new Effects();
 // Placeholder until Phase 6 high-score persistence.
 const highScore = 30_000;
 let lastClear: { finalPercent: number; bonus: number } | null = null;
+let lastDeathCause: string | null = null;
 
 function tickUpdate(): void {
   const events = update(state, keyboard.snapshot());
@@ -76,6 +77,8 @@ function tickUpdate(): void {
   for (const e of events) {
     if (e.type === 'levelClear') {
       lastClear = { finalPercent: e.finalPercent, bonus: e.bonus };
+    } else if (e.type === 'death') {
+      lastDeathCause = e.cause;
     }
   }
 }
@@ -90,6 +93,9 @@ function render(_alpha: number): void {
   renderPlayfield(state, ctx);
   for (const qix of state.qixes) {
     renderQix(ctx, qix);
+  }
+  for (const s of state.sparx) {
+    renderSparx(ctx, s, state.tick);
   }
   effects.render(ctx, FIELD_W, FIELD_H);
 
@@ -132,7 +138,7 @@ function render(_alpha: number): void {
 const loop = new GameLoop({ update: tickUpdate, render });
 
 if (isTestMode()) {
-  installTestHooks(loop, state);
+  installTestHooks(loop, state, () => lastDeathCause);
   render(0);
 } else {
   loop.start();

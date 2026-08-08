@@ -1,4 +1,5 @@
 import { COLORS, HUD_H, LOGICAL_W } from '../config';
+import { sparxTimerTicks } from '../sim/sparx';
 import { claimedPercent, type GameState } from '../sim/state';
 import { drawText, drawTextCentered } from './text';
 
@@ -35,6 +36,13 @@ export function renderHud(
   }
 
   drawText(ctx, `LEVEL ${state.level}`, LOGICAL_W - 66, 22, COLORS.hudText);
+
+  // Sparx time line (PRD §4.6): a red line shrinking from both ends
+  // toward the center; empty = the next wave spawns.
+  const frac = Math.max(0, Math.min(1, state.sparxTimer / sparxTimerTicks(state)));
+  const half = (LOGICAL_W / 2) * frac;
+  ctx.fillStyle = '#ff2020';
+  ctx.fillRect(LOGICAL_W / 2 - half, HUD_H - 4, half * 2, 2);
   if (state.multiplier > 1) {
     drawText(ctx, `${state.multiplier}X`, LOGICAL_W - 24, 34, COLORS.hudText);
   }

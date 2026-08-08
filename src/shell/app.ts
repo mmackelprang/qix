@@ -15,14 +15,29 @@ import {
 } from '../sim/state';
 import { update } from '../sim/update';
 import { Attract, type AttractSegment } from './attract';
-import { insertScore, loadScores, qualifies, type ScoreEntry, saveScores } from './highscores';
+import {
+  defaultTable,
+  insertScore,
+  loadScores,
+  qualifies,
+  type ScoreEntry,
+  saveScores,
+} from './highscores';
+import {
+  DEFAULT_SETTINGS,
+  isCustom,
+  loadSettings,
+  SETTING_RANGES,
+  type Settings,
+  saveSettings,
+} from './settings';
 
 /**
  * The meta-game shell (TD §5.8): attract ⇄ game → name entry → attract,
  * plus pause. Owns the audio routing, render effects, and high scores.
  */
 
-export type AppPhase = 'attract' | 'game' | 'nameEntry';
+export type AppPhase = 'attract' | 'game' | 'nameEntry' | 'settings';
 
 const GAME_OVER_HOLD_TICKS = 240;
 const START_CODES = new Set(['Enter', 'Space']);
@@ -36,6 +51,9 @@ interface NameEntry {
   slot: number;
 }
 
+const SETTING_ROWS = ['target', 'lives', 'sparxTime', 'volume', 'touch', 'reset', 'back'] as const;
+type SettingRow = (typeof SETTING_ROWS)[number];
+
 export class App {
   phase: AppPhase = 'attract';
   readonly attract: Attract;
@@ -48,6 +66,11 @@ export class App {
   private lastSplit: number | null = null;
   lastDeathCause: string | null = null;
   private shellTick = 0;
+  settings: Settings;
+  private settingsRow = 0;
+  private resetArmed = false;
+  /** Notified when settings change (e.g. touch-control visibility). */
+  onSettingsChanged: ((settings: Settings) => void) | null = null;
 
   constructor(
     private readonly audio: AudioEngine,
@@ -55,6 +78,7 @@ export class App {
     autostart = false,
   ) {
     this.scores = loadScores();
+    this.settings = loadSettings();
     this.attract = new Attract(() => this.scores);
     if (autostart) this.startGame();
   }
@@ -65,9 +89,12 @@ export class App {
 
   get customSettings(): boolean {
     return (
-      (this.gameOptions.targetPercent !== undefined && this.gameOptions.targetPercent !== 75) ||
-      (this.gameOptions.lives !== undefined && this.gameOptions.lives !== 3) ||
-      (this.gameOptions.sparxTimeS !== undefined && this.gameOptions.sparxTimeS !== 37)
+      isCustom(this.settings) ||
+      (this.gameOptions.targetPercent !== undefined &&
+        this.gameOptions.targetPercent !== DEFAULT_SETTINGS.targetPercent) ||
+      (this.gameOptions.lives !== undefined && this.gameOptions.lives !== DEFAULT_SETTINGS.lives) ||
+      (this.gameOptions.sparxTimeS !== undefined &&
+        this.gameOptions.sparxTimeS !== DEFAULT_SETTINGS.sparxTimeS)
     );
   }
 
@@ -82,8 +109,13 @@ export class App {
   }
 
   startGame(): void {
-    const { level, ...opts } = this.gameOptions;
-    const game = createGameState(opts);
+    const { level, ...urlOpts } = this.gameOptions;
+    const game = createGameState({
+      targetPercent: this.settings.targetPercent,
+      lives: this.settings.lives,
+      sparxTimeS: this.settings.sparxTimeS,
+      ...urlOpts,
+    });
     if (level !== undefined && level > 1) game.level = level;
     this.game = game;
     this.phase = 'game';
@@ -118,6 +150,77 @@ export class App {
     }
   }
 
+  private adjustSetting(row: SettingRow, delta: number): void {
+    const st = this.settings;
+    switch (row) {
+      case 'target': {
+        const r = SETTING_RANGES.targetPercent;
+        st.targetPercent = Math.min(r.max, Math.max(r.min, st.targetPercent + delta * r.step));
+        break;
+      }
+      case 'lives': {
+        const r = SETTING_RANGES.lives;
+        st.lives = Math.min(r.max, Math.max(r.min, st.lives + delta * r.step));
+        break;
+      }
+      case 'sparxTime': {
+        const r = SETTING_RANGES.sparxTimeS;
+        st.sparxTimeS = Math.min(r.max, Math.max(r.min, st.sparxTimeS + delta * r.step));
+        break;
+      }
+      case 'volume':
+        this.audio.setVolume(Math.round((this.audio.volume + delta * 0.1) * 10) / 10);
+        break;
+      case 'touch': {
+        const order = ['auto', 'on', 'off'] as const;
+        const idx = (order.indexOf(st.touch) + delta + order.length) % order.length;
+        st.touch = order[idx] as Settings['touch'];
+        break;
+      }
+      default:
+        break;
+    }
+    saveSettings(st);
+    this.onSettingsChanged?.(st);
+  }
+
+  private updateSettings(pressed: readonly string[]): void {
+    for (const code of pressed) {
+      const row = SETTING_ROWS[this.settingsRow] as SettingRow;
+      if (code === 'ArrowUp') {
+        this.settingsRow = (this.settingsRow + SETTING_ROWS.length - 1) % SETTING_ROWS.length;
+        this.resetArmed = false;
+        this.audio.play('blip');
+      } else if (code === 'ArrowDown') {
+        this.settingsRow = (this.settingsRow + 1) % SETTING_ROWS.length;
+        this.resetArmed = false;
+        this.audio.play('blip');
+      } else if (code === 'ArrowLeft' || code === 'ArrowRight') {
+        this.adjustSetting(row, code === 'ArrowLeft' ? -1 : 1);
+        this.audio.play('blip');
+      } else if (START_CODES.has(code)) {
+        if (row === 'reset') {
+          if (this.resetArmed) {
+            this.setScores(defaultTable());
+            this.resetArmed = false;
+            this.audio.play('death');
+          } else {
+            this.resetArmed = true;
+            this.audio.play('blip');
+          }
+        } else if (row === 'back') {
+          this.phase = 'attract';
+          this.attract.showSegment('title');
+          this.audio.play('blip');
+        }
+      } else if (code === 'Escape') {
+        this.phase = 'attract';
+        this.attract.showSegment('title');
+        this.audio.play('blip');
+      }
+    }
+  }
+
   /** One 60 Hz tick: `pressed` are the key codes newly down this tick. */
   update(input: InputSnapshot, pressed: readonly string[]): void {
     this.shellTick += 1;
@@ -128,7 +231,18 @@ export class App {
           this.startGame();
           break;
         }
+        if (pressed.includes('KeyS') && this.attract.segment === 'title') {
+          this.audio.play('blip');
+          this.phase = 'settings';
+          this.settingsRow = 0;
+          this.resetArmed = false;
+          break;
+        }
         this.attract.update();
+        break;
+      }
+      case 'settings': {
+        this.updateSettings(pressed);
         break;
       }
       case 'game': {
@@ -220,6 +334,36 @@ export class App {
         hud.clearRect(0, 0, LOGICAL_W, LOGICAL_H);
         this.attract.render(ctx);
         break;
+      case 'settings': {
+        hud.clearRect(0, 0, LOGICAL_W, LOGICAL_H);
+        const cx = LOGICAL_W / 2;
+        drawTextCentered(ctx, 'OPERATOR SETTINGS', cx, 40, '#ffd020', 2);
+        const st = this.settings;
+        const rows: [SettingRow, string, string][] = [
+          ['target', 'CLAIM TARGET', `${st.targetPercent}%`],
+          ['lives', 'LIVES', `${st.lives}`],
+          ['sparxTime', 'SPARX TIME', `${st.sparxTimeS}S`],
+          ['volume', 'VOLUME', `${Math.round(this.audio.volume * 100)}%`],
+          ['touch', 'TOUCH', st.touch.toUpperCase()],
+          ['reset', this.resetArmed ? 'RESET SCORES - SURE?' : 'RESET SCORES', ''],
+          ['back', 'BACK', ''],
+        ];
+        let y = 90;
+        rows.forEach(([, label, value], i) => {
+          const active = i === this.settingsRow;
+          const color = active ? '#ffffff' : '#909090';
+          drawTextCentered(ctx, value ? `${label}  ${value}` : label, cx, y, color, active ? 2 : 1);
+          y += active ? 26 : 20;
+        });
+        drawTextCentered(
+          ctx,
+          'ARROWS ADJUST - SPACE SELECT - ESC BACK',
+          cx,
+          LOGICAL_H - 20,
+          '#505050',
+        );
+        break;
+      }
       case 'nameEntry': {
         hud.clearRect(0, 0, LOGICAL_W, LOGICAL_H);
         const entry = this.nameEntry;

@@ -80,19 +80,19 @@ test('reaching the target ends the level with a bonus and advances', async ({ pa
   expect(next?.score).toBe(3828 + 8000);
 });
 
-test('halting mid-draw in the open field gets the player killed by the Qix', async ({ page }) => {
+test('halting mid-draw in the open field is eventually fatal', async ({ page }) => {
   await page.goto('/?test&seed=1');
   await skipIntro(page);
 
-  // Draw up into the middle of the field and stop — bait for the Qix.
+  // Draw up into the middle of the field and stop — the fuse ignites and
+  // the Qix roams; one of them will get us (seeded, so deterministic).
   await page.keyboard.down('KeyX');
   await page.keyboard.down('ArrowUp');
   await advance(page, 55); // → (128, 146), mid-field
   await page.keyboard.up('ArrowUp');
   await page.keyboard.up('KeyX');
 
-  // The Qix roams the unclaimed region; with this seed it must eventually
-  // touch the stix. Advance in chunks until the death sequence runs.
+  // Advance in chunks until the death sequence has run.
   let lives = 3;
   for (let i = 0; i < 40 && lives === 3; i += 1) {
     await advance(page, 200);

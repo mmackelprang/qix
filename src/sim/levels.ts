@@ -1,5 +1,6 @@
 import type { SimEvent } from './events';
 import { createQix } from './qix';
+import { snapSparxToWalls, sparxTimerTicks, spawnSparxWave } from './sparx';
 import { type GameState, markerSpawn } from './state';
 
 /**
@@ -12,10 +13,16 @@ export function startLevel(state: GameState, events: SimEvent[]): void {
   grid.resetBorder();
   state.claimedCells = 0;
   state.drawing = null;
+  state.fuse = null;
   state.marker = markerSpawn(grid.w, grid.h);
+  state.markerPrev = { ...state.marker };
   const center = { x: Math.floor(grid.w / 2), y: Math.floor(grid.h / 4) };
   state.qixCell = center;
   state.qixes = [createQix(state, center)];
+  state.sparx = [];
+  state.sparxTimer = sparxTimerTicks(state);
+  state.sparxExpiries = 0;
+  spawnSparxWave(state, false, events);
   events.push({ type: 'levelStart', level: state.level });
 }
 
@@ -26,6 +33,7 @@ export function resolveDeath(state: GameState, events: SimEvent[]): void {
     state.mode = 'gameOver';
     state.modeTicks = 0;
     state.drawing = null;
+    state.fuse = null;
     events.push({ type: 'gameOver', finalScore: state.score });
     return;
   }
@@ -36,6 +44,15 @@ export function resolveDeath(state: GameState, events: SimEvent[]): void {
     state.marker = state.drawing.path[0] ?? state.marker;
     state.drawing = null;
   }
+  state.markerPrev = { ...state.marker };
+  state.fuse = null;
+  // Extra sparx (beyond the level's original wave) despawn, any stix
+  // chasers return to the walls, and the time line restarts (PRD §4.6).
+  state.sparx = state.sparx.slice(0, 2);
+  for (const s of state.sparx) s.stixIndex = null;
+  snapSparxToWalls(state);
+  state.sparxTimer = sparxTimerTicks(state);
+  state.sparxExpiries = 0;
   state.mode = 'playing';
   state.modeTicks = 0;
   events.push({ type: 'respawn' });

@@ -16,6 +16,11 @@ export interface QixStateSummary {
   lives: number;
   level: number;
   multiplier: number;
+  sparxCount: number;
+  superSparx: boolean;
+  sparxTimer: number;
+  fuseBurning: boolean;
+  lastDeathCause: string | null;
 }
 
 export interface QixTestHooks {
@@ -35,7 +40,11 @@ export function isTestMode(): boolean {
   return new URLSearchParams(window.location.search).has('test');
 }
 
-export function installTestHooks(loop: GameLoop, state: GameState): void {
+export function installTestHooks(
+  loop: GameLoop,
+  state: GameState,
+  getLastDeathCause: () => string | null = () => null,
+): void {
   window.__qix = {
     advanceTicks: (n: number): void => {
       loop.step(n);
@@ -52,6 +61,11 @@ export function installTestHooks(loop: GameLoop, state: GameState): void {
       lives: state.lives,
       level: state.level,
       multiplier: state.multiplier,
+      sparxCount: state.sparx.length,
+      superSparx: state.sparx.some((s) => s.isSuper),
+      sparxTimer: state.sparxTimer,
+      fuseBurning: state.fuse?.burning ?? false,
+      lastDeathCause: getLastDeathCause(),
     }),
   };
 }

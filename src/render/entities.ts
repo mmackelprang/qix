@@ -1,4 +1,5 @@
 import type { QixState } from '../sim/qix';
+import type { SparxState } from '../sim/sparx';
 
 /** Qix streamer palette: current line brightest, trail fading behind. */
 const QIX_COLORS: Readonly<Record<string, string>> = {
@@ -21,4 +22,20 @@ export function renderQix(ctx: CanvasRenderingContext2D, qix: QixState): void {
     ctx.stroke();
   }
   ctx.globalAlpha = 1;
+}
+
+/** Sparx: a four-spoke pinwheel, white normally, blue when Super. */
+export function renderSparx(ctx: CanvasRenderingContext2D, sparx: SparxState, tick: number): void {
+  const { x, y } = sparx.pos;
+  const r = 2.5;
+  const spin = ((tick >> 2) % 2) * (Math.PI / 4);
+  ctx.strokeStyle = sparx.isSuper ? '#4080ff' : '#ffffff';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  for (let i = 0; i < 4; i += 1) {
+    const a = spin + (Math.PI / 2) * i;
+    ctx.moveTo(x, y);
+    ctx.lineTo(x + Math.cos(a) * r, y + Math.sin(a) * r);
+  }
+  ctx.stroke();
 }

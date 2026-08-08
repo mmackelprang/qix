@@ -18,6 +18,11 @@ export type SimEvent =
   | { type: 'drawStart'; cls: DrawClass }
   | { type: 'drawStop' }
   | { type: 'death'; cause: DeathCause }
+  | { type: 'sparxSpawn'; count: number; isSuper: boolean }
+  | { type: 'superSparx' }
+  | { type: 'fuseStart' }
+  | { type: 'fuseIgnite' }
+  | { type: 'fuseStop' }
   | { type: 'respawn' }
   | { type: 'levelStart'; level: number }
   | { type: 'levelClear'; finalPercent: number; bonus: number }

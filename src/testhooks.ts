@@ -1,17 +1,23 @@
 import type { GameLoop } from './loop';
-import { claimedPercent, type GameMode, type GameState } from './sim/state';
+import type { App } from './shell/app';
+import type { ScoreEntry } from './shell/highscores';
+import { claimedPercent, type GameMode } from './sim/state';
 
 /**
  * Deterministic driving hooks for e2e/UAT, enabled only when the page is
  * loaded with `?test`. In test mode the rAF loop does not auto-start; the
- * Playwright suite advances ticks synchronously instead.
+ * Playwright suite advances ticks synchronously instead. `?autostart`
+ * additionally skips attract mode straight into a game.
  */
 export interface QixStateSummary {
   ticks: number;
+  phase: string;
+  attractSegment: string;
+  paused: boolean;
   claimedPercent: number;
   marker: { x: number; y: number };
   drawing: boolean;
-  mode: GameMode;
+  mode: GameMode | 'none';
   score: number;
   lives: number;
   level: number;
@@ -35,6 +41,8 @@ export interface QixTestHooks {
   isRunning: () => boolean;
   getSummary: () => QixStateSummary;
   getAudioInfo: () => QixAudioInfo;
+  getScores: () => ScoreEntry[];
+  setScores: (entries: ScoreEntry[]) => void;
 }
 
 declare global {
@@ -49,8 +57,7 @@ export function isTestMode(): boolean {
 
 export function installTestHooks(
   loop: GameLoop,
-  state: GameState,
-  getLastDeathCause: () => string | null = () => null,
+  app: App,
   getAudioInfo: () => QixAudioInfo = () => ({ unlocked: false, muted: false }),
 ): void {
   window.__qix = {
@@ -59,23 +66,33 @@ export function installTestHooks(
     },
     getTicks: (): number => loop.ticks,
     isRunning: (): boolean => loop.running,
-    getSummary: (): QixStateSummary => ({
-      ticks: loop.ticks,
-      claimedPercent: claimedPercent(state),
-      marker: { x: state.marker.x, y: state.marker.y },
-      drawing: state.drawing !== null,
-      mode: state.mode,
-      score: state.score,
-      lives: state.lives,
-      level: state.level,
-      multiplier: state.multiplier,
-      qixCount: state.qixes.length,
-      sparxCount: state.sparx.length,
-      superSparx: state.sparx.some((s) => s.isSuper),
-      sparxTimer: state.sparxTimer,
-      fuseBurning: state.fuse?.burning ?? false,
-      lastDeathCause: getLastDeathCause(),
-    }),
+    getSummary: (): QixStateSummary => {
+      const game = app.game;
+      return {
+        ticks: loop.ticks,
+        phase: app.phase,
+        attractSegment: app.attract.segment,
+        paused: app.paused,
+        claimedPercent: game ? claimedPercent(game) : 0,
+        marker: game ? { x: game.marker.x, y: game.marker.y } : { x: -1, y: -1 },
+        drawing: game ? game.drawing !== null : false,
+        mode: game ? game.mode : 'none',
+        score: game?.score ?? 0,
+        lives: game?.lives ?? 0,
+        level: game?.level ?? 0,
+        multiplier: game?.multiplier ?? 1,
+        qixCount: game?.qixes.length ?? 0,
+        sparxCount: game?.sparx.length ?? 0,
+        superSparx: game?.sparx.some((s) => s.isSuper) ?? false,
+        sparxTimer: game?.sparxTimer ?? 0,
+        fuseBurning: game?.fuse?.burning ?? false,
+        lastDeathCause: app.lastDeathCause,
+      };
+    },
     getAudioInfo,
+    getScores: (): ScoreEntry[] => app.getScores(),
+    setScores: (entries: ScoreEntry[]): void => {
+      app.setScores(entries);
+    },
   };
 }

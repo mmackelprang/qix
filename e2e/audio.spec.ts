@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 
 /** Audio unlock and mute-persistence smoke UAT (PRD §6.4). */
 test('audio unlocks on first gesture and mute persists across reloads', async ({ page }) => {
-  await page.goto('/?test&seed=1');
+  await page.goto('/?test&seed=1&autostart');
   await page.waitForFunction(() => window.__qix !== undefined);
 
   const before = await page.evaluate(() => window.__qix?.getAudioInfo());
